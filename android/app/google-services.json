@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "964047896105",
+    "firebase_url": "https://hey-auto-b4378-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "hey-auto-b4378",
+    "storage_bucket": "hey-auto-b4378.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964047896105:android:dedbe7a2ff829b87f26638",
+        "android_client_info": {
+          "package_name": "com.example.hey_auto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964047896105-952n91l5jr7ebi7cq68vnqehlkraeqmh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWKlFe6vTDXgEuYLIt99C_OBCmsiPhIM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964047896105-952n91l5jr7ebi7cq68vnqehlkraeqmh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
