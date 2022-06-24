@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hey_auto/Home.dart';
+import 'package:hey_auto/pages/Redirection.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,9 +17,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/',
+      initialRoute: '/Redirection',
       routes: {
         '/': (context) => const Home(),
+        '/Redirection': (context) => const Redirection(),
         // '/second': (context) => const SecondScreen(),
       },
       // home: const MyHomePage(title: 'Flutter Demo Home Page'),
