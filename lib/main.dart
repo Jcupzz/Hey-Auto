@@ -1,5 +1,6 @@
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
+import 'package:hey_auto/Home%20-%20Copy.dart';
 import 'package:hey_auto/Home.dart';
 import 'package:hey_auto/pages/Redirection.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const Home(),
+        '/': (context) => Location(),
         // '/Redirection': (context) => const Redirection(),
         // '/second': (context) => const SecondScreen(),
       },

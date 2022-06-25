@@ -1,150 +1,178 @@
-import 'package:bot_toast/bot_toast.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'dart:async';
 
-class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+// import 'package:flutter/material.dart';
+// import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:hey_auto/static/googlemapapi.dart';
+// import 'package:location/location.dart';
 
-  @override
-  State<Home> createState() => _HomeState();
-}
+// class LocationTracking extends StatefulWidget {
+//   const LocationTracking({Key? key}) : super(key: key);
 
-class _HomeState extends State<Home> {
-  FirebaseDatabase database = FirebaseDatabase.instance;
-  DatabaseReference ref = FirebaseDatabase.instance.ref("users");
-  late LatLng currentPostion;
+//   @override
+//   _LocationTrackingState createState() => _LocationTrackingState();
+// }
 
-  late GoogleMapController mapController;
-  List<Marker> myMarker = [];
-  // DocumentSnapshot documentSnapshot;
+// class _LocationTrackingState extends State<LocationTracking> {
+//   LatLng sourceLocation = LatLng(28.432864, 77.002563);
+//   LatLng destinationLatlng = LatLng(28.431626, 77.002475);
 
-  void _onMapCreated(GoogleMapController controller) {
-    setState(() {
-      mapController = controller;
-    });
-  }
+//   Completer<GoogleMapController> _controller = Completer();
 
-  static final CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
-    zoom: 14.4746,
-  );
+//   Set<Marker> _marker = Set<Marker>();
 
-  @override
-  void initState() {
-    _getUserLocationPermission();
-    _getUserLocation();
-    _getAllLatLongFromFb();
+//   Set<Polyline> _polylines = Set<Polyline>();
+//   List<LatLng> polylineCoordinates = [];
+//   late PolylinePoints polylinePoints;
 
-    super.initState();
-  }
+//   late StreamSubscription<LocationData> subscription;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // ElevatedButton(
-          //   onPressed: () {
-          //     setdata();
-          //   },
-          //   child: Text("data"),
-          // ),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: GoogleMap(initialCameraPosition: _kGooglePlex),
-          )
-        ],
-      ),
-    );
-  }
+//   LocationData? currentLocation;
+//   late LocationData destinationLocation;
+//   late Location location;
 
-  setdata() async {
-    await ref.set({
-      "name": "sdsad",
-      "age": 123,
-    });
-  }
+//   @override
+//   void initState() {
+//     super.initState();
 
-  void _getUserLocation() async {
-    var position = await GeolocatorPlatform.instance.getCurrentPosition(
-        locationSettings: LocationSettings(accuracy: LocationAccuracy.best));
-    if (position != null) {
-      setState(() {
-        currentPostion = LatLng(position.latitude, position.longitude);
-      });
-    } else {
-      setState(() {
-        currentPostion = LatLng(56.53455, 65.4533434);
-      });
-    }
-  }
+//     location = Location();
+//     polylinePoints = PolylinePoints();
 
-  void _getAllLatLongFromFb() async {
-    DatabaseReference ref = FirebaseDatabase.instance.ref('allUsers');
+//     subscription = location.onLocationChanged.listen((clocation) {
+//       currentLocation = clocation;
 
-    ref.onValue.listen((DatabaseEvent event) {
-      final data = event.snapshot.value;
-      myMarker.add(
-        Marker(
-          markerId: MarkerId(
-            const LatLng(2222, 22222).toString(),
-          ),
-        ),
-      );
-      print(data);
-    });
+//       updatePinsOnMap();
+//     });
 
-    // await FirebaseDatabase.instance
-    //     .ref("users")
-    //     .get()
-    //     .then((QuerySnapshot querySnapshot) => querySnapshot.docs.forEach((doc) {
-    //           myMarker.add(Marker(
-    //               markerId: MarkerId(LatLng(doc['lat'], doc['long']).toString()),
-    //               onTap: () {
-    //                 setState(() {
-    //                   showDetailsButton = true;
-    //                   documentSnapshot = doc;
-    //                 });
-    //               },
-    //               position: LatLng(doc['lat'], doc['long']),
-    //               infoWindow: InfoWindow(title: doc['iName'], snippet: doc['iAddress'])));
-    //         }));
-  }
+//     setInitialLocation();
+//   }
 
-  void _getUserLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-    BotToast.showText(text: 'Hello World');
+//   void setInitialLocation() async {
+//     await location.getLocation().then((value) {
+//       currentLocation = value;
+//       setState(() {});
+//     });
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      BotToast.showText(text: 'Location services are disabled');
-      return Future.error('Location services are disabled.');
-    }
+//     destinationLocation = LocationData.fromMap({
+//       "latitude": destinationLatlng.latitude,
+//       "longitude": destinationLatlng.longitude,
+//     });
+//   }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.deniedForever) {
-      BotToast.showText(
-          text:
-              'Location permissions are permantly denied, we cannot request permissions');
-      return Future.error(
-          'Location permissions are permantly denied, we cannot request permissions.');
-    }
+//   void showLocationPins() {
+//     var sourceposition = LatLng(
+//         currentLocation!.latitude ?? 0.0, currentLocation!.longitude ?? 0.0);
 
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse &&
-          permission != LocationPermission.always) {
-        BotToast.showText(
-            text:
-                'Location permissions are denied (actual value: $permission)');
-        return Future.error(
-            'Location permissions are denied (actual value: $permission).');
-      }
-    }
-  }
-}
+//     var destinationPosition =
+//         LatLng(destinationLatlng.latitude, destinationLatlng.longitude);
+
+//     _marker.add(Marker(
+//       markerId: MarkerId('sourcePosition'),
+//       position: sourceposition,
+//     ));
+
+//     _marker.add(
+//       Marker(
+//         markerId: MarkerId('destinationPosition'),
+//         position: destinationPosition,
+//       ),
+//     );
+
+//     setPolylinesInMap();
+//   }
+
+//   void setPolylinesInMap() async {
+//     var result = await polylinePoints.getRouteBetweenCoordinates(
+//       GoogleMapApi().url,
+//       PointLatLng(
+//           currentLocation!.latitude ?? 0.0, currentLocation!.longitude ?? 0.0),
+//       PointLatLng(destinationLatlng.latitude, destinationLatlng.longitude),
+//     );
+
+//     if (result.points.isNotEmpty) {
+//       result.points.forEach((pointLatLng) {
+//         polylineCoordinates
+//             .add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+//       });
+//     }
+
+//     setState(() {
+//       _polylines.add(Polyline(
+//         width: 5,
+//         polylineId: PolylineId('polyline'),
+//         color: Colors.blueAccent,
+//         points: polylineCoordinates,
+//       ));
+//     });
+//   }
+
+//   void updatePinsOnMap() async {
+//     CameraPosition cameraPosition = CameraPosition(
+//       zoom: 20,
+//       tilt: 80,
+//       bearing: 30,
+//       target: LatLng(
+//           currentLocation!.latitude ?? 0.0, currentLocation!.longitude ?? 0.0),
+//     );
+
+//     final GoogleMapController controller = await _controller.future;
+
+//     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+
+//     var sourcePosition = LatLng(
+//         currentLocation!.latitude ?? 0.0, currentLocation!.longitude ?? 0.0);
+
+//     setState(() {
+//       _marker.removeWhere((marker) => marker.mapsId.value == 'sourcePosition');
+
+//       _marker.add(Marker(
+//         markerId: MarkerId('sourcePosition'),
+//         position: sourcePosition,
+//       ));
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     CameraPosition initialCameraPosition = CameraPosition(
+//       zoom: 20,
+//       tilt: 80,
+//       bearing: 30,
+//       target: currentLocation != null
+//           ? LatLng(currentLocation!.latitude ?? 0.0,
+//               currentLocation!.longitude ?? 0.0)
+//           : LatLng(0.0, 0.0),
+//     );
+
+//     return currentLocation == null
+//         ? Container(
+//             height: MediaQuery.of(context).size.height,
+//             width: MediaQuery.of(context).size.width,
+//             alignment: Alignment.center,
+//             child: CircularProgressIndicator(),
+//           )
+//         : SafeArea(
+//             child: Scaffold(
+//               body: GoogleMap(
+//                 myLocationButtonEnabled: true,
+//                 compassEnabled: true,
+//                 markers: _marker,
+//                 polylines: _polylines,
+//                 mapType: MapType.normal,
+//                 initialCameraPosition: initialCameraPosition,
+//                 onMapCreated: (GoogleMapController controller) {
+//                   _controller.complete(controller);
+
+//                   showLocationPins();
+//                 },
+//               ),
+//             ),
+//           );
+//   }
+
+//   @override
+//   void dispose() {
+//     subscription.cancel();
+//     super.dispose();
+//   }
+// }
