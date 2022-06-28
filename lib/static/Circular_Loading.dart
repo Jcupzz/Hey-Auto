@@ -8,11 +8,11 @@ class Circular_Loading extends StatelessWidget {
     var brightness = Theme.of(context).brightness;
     ThemeData themeData;
     return Container(
-        color: Theme.of(context).backgroundColor,
+        color: Colors.white,
         child: Center(
           child: SpinKitChasingDots(
             color: brightness == Brightness.light
-                ? Colors.teal[700]
+                ? Color.fromARGB(255, 0, 0, 0)
                 : Colors.white,
             size: 100.0,
           ),

@@ -1,24 +1,25 @@
 import 'dart:async';
-import 'dart:ffi';
 
 import 'package:bot_toast/bot_toast.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hey_auto/static/Circular_Loading.dart';
 
-class Location extends StatefulWidget {
+class Driver_Home extends StatefulWidget {
   @override
-  _LocationState createState() => _LocationState();
+  _Driver_HomeState createState() => _Driver_HomeState();
 }
 
-class _LocationState extends State<Location> {
+class _Driver_HomeState extends State<Driver_Home> {
   bool showDetailsButton = false;
   late GoogleMapController mapController;
   List<Marker> myMarker = [];
-  // DocumentSnapshot documentSnapshot;
+  late DocumentSnapshot documentSnapshot;
 
   void _onMapCreated(GoogleMapController controller) {
     setState(() {
@@ -27,68 +28,60 @@ class _LocationState extends State<Location> {
   }
 
 //
-  LatLng currentPostion = const LatLng(11.783793, 75.514826);
+  late LatLng currentPostion = LatLng(11.783657, 75.514773);
 
   void _getUserLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+    var position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
     if (position != null) {
       setState(() {
         currentPostion = LatLng(position.latitude, position.longitude);
       });
     } else {
       setState(() {
-        currentPostion = LatLng(56.53455, 65.4533434);
+        currentPostion = LatLng(11.783657, 75.514773);
       });
     }
   }
 
-  void getPolyPoints() async {}
-
   void _getAllLatLongFromFb() async {
-    DatabaseReference ref = FirebaseDatabase.instance.ref('allUsers');
-    print("Hello");
-    ref.onValue.listen((DatabaseEvent event) {
-      final data = event.snapshot.value;
-      // print(data.toString());
-
-      String lat = data.toString().substring(5, 15);
-      String long = data.toString().substring(21, 32);
-
-      // print(lat);
-      // print(long);
-      // String datas = data.toString();
-      // List<String> ss = datas
-      //     .substring(datas.indexOf("(") + 1, datas.lastIndexOf(")"))
-      //     .split(",");
-
-      // print(ss.toString());
-      var latitude = double.tryParse(lat);
-      var longitude = double.tryParse(long);
-      // print("longitude = " + longitude.toString());
-
-      // print("latitude = " + latitude.toString());
-      setState(() {
-        myMarker.add(Marker(
-            markerId: MarkerId(latitude.toString()),
-            position: LatLng(latitude ?? 10.174826, longitude ?? 76.577532)));
-      });
-    });
+    await FirebaseFirestore.instance
+        .collection("allUsers")
+        // .where('isRequested', isEqualTo: true)
+        .get()
+        .then(
+            (QuerySnapshot querySnapshot) => querySnapshot.docs.forEach((doc) {
+                  print(doc.get('lat'));
+                  setState(() {});
+                  myMarker.add(
+                    Marker(
+                      markerId: MarkerId(
+                          LatLng(doc.get('lat'), doc.get('long')).toString()),
+                      onTap: () {
+                        setState(() {
+                          showDetailsButton = true;
+                          documentSnapshot = doc;
+                        });
+                      },
+                      position: LatLng(doc.get('lat'), doc.get('long')),
+                      // infoWindow:
+                      //     InfoWindow(title: doc['iName'], snippet: doc['iAddress']),
+                    ),
+                  );
+                }));
   }
 
   @override
   void initState() {
     super.initState();
-    _getAllLatLongFromFb();
     _getUserLocationPermission();
     _getUserLocation();
+    _getAllLatLongFromFb();
   }
 
 //
   late Set<Marker> marker;
   late LatLng latLngs;
-  late LatLng sourceLocation = LatLng(0, 0);
-  late LatLng destination = LatLng(10, 10);
 
   @override
   Widget build(BuildContext context) {
@@ -101,21 +94,10 @@ class _LocationState extends State<Location> {
                   GoogleMap(
                     mapToolbarEnabled: true,
                     buildingsEnabled: true,
-                    mapType: MapType.hybrid,
+                    mapType: MapType.normal,
                     myLocationButtonEnabled: true,
                     myLocationEnabled: true,
                     markers: Set.from(myMarker),
-
-                    // markers: {
-                    //   Marker(
-                    //       markerId: MarkerId("source"),
-                    //       position: sourceLocation),
-                    //   Marker(
-                    //       markerId: MarkerId("destination"),
-                    //       position: destination)
-                    //       ,
-                    //       myMarker
-                    // },
                     onMapCreated: _onMapCreated,
                     initialCameraPosition: CameraPosition(
                       target: currentPostion,
@@ -132,9 +114,70 @@ class _LocationState extends State<Location> {
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                               child: ElevatedButton(
-                                onPressed: () async {},
+                                onPressed: () async {
+                                  if (documentSnapshot != null) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            elevation: 24,
+                                            backgroundColor:
+                                                Theme.of(context).cardColor,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        20.0)),
+                                            title: Text("Confirmation",
+                                                style: h3_bold),
+                                            content: Text(
+                                                "Confirm the pick up?",
+                                                style: h2),
+                                            actions: <Widget>[
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    primary: Theme.of(context)
+                                                        .cardColor,
+                                                    elevation: 0),
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  "No",
+                                                  style: TextStyle(
+                                                      color: Colors.greenAccent,
+                                                      fontSize: 18),
+                                                ),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    primary: Theme.of(context)
+                                                        .cardColor,
+                                                    elevation: 0),
+                                                onPressed: () async {
+                                                  BotToast.showText(
+                                                      text: "Confirmed");
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  "Yes",
+                                                  style: TextStyle(
+                                                      fontSize: 18,
+                                                      color: Colors.redAccent),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        });
+
+                                    // Navigator.push(
+                                    //     context,
+                                    //     MaterialPageRoute(
+                                    //         builder: (_) =>
+                                    //             Details(documentSnapshot)));
+                                  }
+                                },
                                 child: Text(
-                                  "Show Details",
+                                  "Pick up",
                                   style: TextStyle(color: Colors.black),
                                 ),
                                 style: ElevatedButton.styleFrom(
@@ -189,3 +232,35 @@ class _LocationState extends State<Location> {
     }
   }
 }
+
+TextStyle h3_bold = TextStyle(
+  fontSize: 30,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.bold,
+);
+TextStyle h2_bold = TextStyle(
+  fontSize: 20,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.bold,
+);
+TextStyle h14_bold = TextStyle(
+  fontSize: 10,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.bold,
+);
+TextStyle h3 = TextStyle(
+  fontSize: 30,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.normal,
+);
+TextStyle h2 = TextStyle(
+  fontSize: 20,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.normal,
+);
+TextStyle h14 = TextStyle(
+  fontSize: 14,
+  color: Colors.black,
+  fontFamily: GoogleFonts.poppins().fontFamily,
+  fontWeight: FontWeight.normal,
+);
